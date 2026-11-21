@@ -1,0 +1,169 @@
+#include <iostream> #include <vector> #include <memory> #include <stdexcept> #include <iomanip> using namespace std;
+// Base Bill class
+class Bill {
+protected:
+double amount;
+
+public:
+Bill(double a) {
+if (a < 0)
+throw invalid_argument("Negative bill amount");
+amount = a;
+}
+
+virtual double calculate() const = 0;
+virtual string getType() const = 0;
+
+virtual ~Bill() {}
+};
+
+// Existing bill type 1
+class OutPatientBill : public Bill {
+public:
+OutPatientBill(double a) : Bill(a) {}
+
+double calculate() const override {
+    return amount;
+}
+
+string getType() const override {
+    return "OutPatient";
+}
+};
+
+// Existing bill type 2
+class InPatientBill : public Bill {
+public:
+InPatientBill(double a) : Bill(a) {}
+
+double calculate() const override {
+    return amount;
+}
+
+string getType() const override {
+    return "InPatient";
+}
+};
+
+// New bill type added without changing existing classes
+class EmergencyBill : public Bill {
+public:
+EmergencyBill(double a) : Bill(a) {}
+
+double calculate() const override {
+    return amount;
+}
+
+string getType() const override {
+    return "Emergency";
+}
+};
+
+// Base Payer class
+class Payer {
+public:
+virtual string getName() const = 0;
+virtual double patientShare(double amount) const = 0;
+
+virtual ~Payer() {}
+};
+
+// Existing payer
+class SelfPay : public Payer {
+public:
+string getName() const override {
+return "Self Pay";
+}
+
+double patientShare(double amount) const override {
+    return amount;
+}
+};
+
+// Existing payer
+class InsurancePayer : public Payer {
+public:
+string getName() const override {
+return "Insurance";
+}
+
+double patientShare(double amount) const override {
+    return amount * 0.20;
+}
+};
+
+// New payer added without changing existing classes
+class CorporatePayer : public Payer {
+public:
+string getName() const override {
+return "Corporate";
+}
+
+double patientShare(double amount) const override {
+    return amount * 0.10;
+}
+};
+
+// Display bill details
+void displayBill(const Bill& bill, const Payer& payer) {
+double total = bill.calculate();
+double share = payer.patientShare(total);
+
+cout << "Bill Type: " << bill.getType() << endl;
+cout << "Payer: " << payer.getName() << endl;
+cout << "Total Bill: " << total << endl;
+cout << "Patient Amount: " << share << endl;
+cout << "------------------------" << endl;
+}
+
+int main() {
+cout << fixed << setprecision(2);
+
+try {
+    vector<unique_ptr<Bill>> bills;
+
+    bills.push_back(
+        make_unique<OutPatientBill>(1000));
+
+    bills.push_back(
+        make_unique<InPatientBill>(5000));
+
+    bills.push_back(
+        make_unique<EmergencyBill>(3000));
+
+    SelfPay self;
+    InsurancePayer insurance;
+    CorporatePayer corporate;
+
+    cout << "HOSPITAL BILLING SYSTEM" << endl;
+    cout << "========================" << endl;
+
+    displayBill(*bills[0], self);
+    displayBill(*bills[1], insurance);
+    displayBill(*bills[2], corporate);
+
+    // Exception testing
+    cout << "\nEXCEPTION TESTING" << endl;
+
+    try {
+        EmergencyBill invalidBill(-500);
+        cout << invalidBill.calculate() << endl;
+    }
+    catch (const invalid_argument& e) {
+        cout << "Caught Exception: "
+             << e.what() << endl;
+    }
+
+    cout << "\nAll previous and new tests completed."
+         << endl;
+
+    cout << "Hospital billing system is working."
+         << endl;
+}
+catch (const exception& e) {
+    cerr << "Error: " << e.what() << endl;
+    return 1;
+}
+
+return 0;
+}
